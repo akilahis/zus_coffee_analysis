@@ -2,9 +2,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import streamlit as st
-import folium
-from folium import plugins
-from streamlit_folium import st_folium
 import geopandas as gpd
 
 def map_plot(df_gdf, gadm, district_gdf):
@@ -77,108 +74,6 @@ def bar_region(df_selection):
     ax.set_ylabel("District")
     return fig
 
-def map_folium(df_gdf, gadm, district_gdf):
-    st.title("Zus Coffee Stores Across Malaysia")
-    
-    # Create base map centered on Malaysia
-    m = folium.Map(
-        location=[4.2105, 101.9758],  # Center of Malaysia
-        zoom_start=6,
-        tiles='OpenStreetMap'
-    )
-    
-    # Add country boundary
-    folium.GeoJson(
-        gadm,
-        style_function=lambda x: {
-            'fillColor': 'transparent',
-            'color': 'green',
-            'weight': 2,
-            'fillOpacity': 0
-        }
-    ).add_to(m)
-    
-    # Add district boundaries
-    folium.GeoJson(
-        district_gdf,
-        style_function=lambda x: {
-            'fillColor': 'transparent',
-            'color': 'yellow',
-            'weight': 1,
-            'fillOpacity': 0
-        }
-    ).add_to(m)
-    
-    # Add coffee store points
-    for idx, row in df_gdf.iterrows():
-        folium.CircleMarker(
-            location=[row.geometry.y, row.geometry.x],
-            radius=3,
-            popup=f"Store: {row.get('name', 'address')}",  # Adjust column name as needed
-            color='blue',
-            fill=True,
-            fillColor='blue',
-            fillOpacity=0.8
-        ).add_to(m)
-    
-    # Display the map in Streamlit
-    map_data = st_folium(m, width=700, height=500)
-
-    return map_data
-    
-def map_plot_filter(df_gdf, gadm, district_gdf):
-    st.subheader("Zus Coffee Stores Across Malaysia")
-
-    # Get unique states for dropdown (adjust column name as needed)
-    state_column = 'NAME_1'  # Change this to match your actual state column in gadm
-    state_names = sorted(gadm[state_column].unique())
-    
-    # Add "All States" option
-    state_options = ['All States'] + list(state_names)
-    
-    # Create dropdown
-    selected_state = st.selectbox(
-        "Select a state to zoom in:",
-        options=state_options,
-        index=0  # Default to "All States"
-    )
-    
-    # Create the plot
-    fig, ax = plt.subplots(figsize=(20, 38))
-    
-    if selected_state == 'All States':
-        # Show all of Malaysia
-        gadm.boundary.plot(ax=ax, color="green", linewidth=1)
-        district_gdf.boundary.plot(ax=ax, color="yellow", linewidth=0.3)  # Uncomment if needed
-        df_gdf.plot(ax=ax, color="blue", markersize=2, alpha=1)
-        
-    else:
-        # Filter gadm for selected state
-        selected_state_boundary = gadm[gadm[state_column] == selected_state]
-        
-        # Filter coffee stores for selected state using spatial intersection
-        selected_stores = df_gdf[df_gdf.intersects(selected_state_boundary.unary_union)]
-        
-        # Plot the filtered data
-        selected_state_boundary.boundary.plot(ax=ax, color="green", linewidth=2)
-        # Optionally show districts in selected state
-        selected_districts = district_gdf[district_gdf.intersects(selected_state_boundary.unary_union)]
-        selected_districts.boundary.plot(ax=ax, color="yellow", linewidth=1)
-        
-        selected_stores.plot(ax=ax, color="blue", markersize=20, alpha=1)  # Slightly larger markers for zoomed view
-        
-        # Set the plot bounds to the selected state
-        bounds = selected_state_boundary.total_bounds
-        ax.set_xlim(bounds[0], bounds[2])  # min_x, max_x
-        ax.set_ylim(bounds[1], bounds[3])  # min_y, max_y
-        
-        # Show store count for selected state
-        st.info(f"**{len(selected_stores)} Zus Coffee stores** found in {selected_state}")
-    
-    ax.set_axis_off()
-    st.pyplot(fig, use_container_width=True)
-    
-    return selected_state
 
 def map_plot_filter_population(df_gdf, gadm, district_gdf, population_df):
     st.subheader("Distribution of ZUS's Outlet with Population Density")

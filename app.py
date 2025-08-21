@@ -1,7 +1,7 @@
 import streamlit as st
 import geopandas as gpd
 import pandas as pd
-from visuals import map_plot, bar_region, map_plot_filter_population, bar_state, summary_density
+from visuals import bar_region, map_plot_filter_population, bar_state, summary_density
 
 #load all necesary data
 df = pd.read_csv("data/zus_POI.csv")
@@ -47,8 +47,6 @@ df_gdf = df_gdf[~df_gdf.geometry.isna()]
 #call visualization
 
 map_plot_filter_population(df_gdf, gadm, district_gdf, population_df)
-#bar_region(df_selection)
-#bar_state(df_selection)
 col1, col2 = st.columns(2)
 
 with col1:
